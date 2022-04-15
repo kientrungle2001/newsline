@@ -165,7 +165,7 @@
                 newsList.append(itemNews);
             }
             itemNews.find('div').append(`<p>
-                <a target="_blank" href="`+ item.link + `">` + item.title + `</a>    
+                <a target="_blank" href="`+ item.link + `">` + item.title + ' (' + itemDate + ')'  + `</a>    
             </p>`);
         }
         
