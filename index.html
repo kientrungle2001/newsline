@@ -18,7 +18,13 @@
 
 <body>
     <div style="padding: 30px;">
-        <input id="source_input" style="width: calc(100% - 30px); padding: 15px;" />
+        <textarea id="source_input"
+            style="width: calc(100% - 30px); padding: 15px;">
+https://www.dkn.tv/cat/the-gioi
+https://www.dkn.tv/cat/thoi-su
+https://trithucvn.org/tin-tuc-vn
+https://trithucvn.org/the-gioi
+</textarea>
         <br />
         <button id="exec_button" onclick="loadContent()">
             Tải nội dung
@@ -171,10 +177,40 @@
 
 
         function loadPage(page, callback) {
-            var url = $('#source_input').val();
-            if (!url || url == '') {
-                url = 'https://www.dkn.tv/cat/the-gioi';
+            var urls = $('#source_input').val().split('\n');
+            var uniqueUrls = {};
+            urls.forEach((url) => {
+                url = $.trim(url);
+                if (url) {
+                    uniqueUrls[url] = true;
+                }
+            });
+            var urlsLoaded = {};
+            for (var url in uniqueUrls) {
+                loadUrl(url, page, function(url, page) {
+                    urlsLoaded[url] = true;
+                });
             }
+            
+            var urlsLoadedInterval = setInterval(() => {
+                var allUrlsLoaded = true;
+                for (var url in uniqueUrls) {
+                    if (typeof urlsLoaded[url] == 'undefined')
+                    {
+                        allUrlsLoaded = false;
+                        break;
+                    }
+                }
+                if (allUrlsLoaded) {
+                    console.log([url, page], 'loaded');
+                    callback(page);
+                    clearInterval(urlsLoadedInterval);
+                }
+            }, 100);
+            
+        }
+
+        function loadUrl(url, page, callback) {
             $.ajax({
                 url: url + '/feed?posts_per_page=30&page=' + page,
                 dataType: 'text',
@@ -187,8 +223,7 @@
                             appendNews(item);
                         });
                     }
-                    
-                    callback(page);
+                    callback(url, page);
                 }
             });
         }
@@ -216,14 +251,12 @@
             var allLoadedInterval = setInterval(() => {
                 allLoaded = true;
                 for (var i = 1; i < maxPage; i++) {
-                    if (typeof pagesLoaded['page' + i] === 'undefined')
-                    {
+                    if (typeof pagesLoaded['page' + i] === 'undefined') {
                         allLoaded = false;
                         break;
                     }
                 }
-                if (allLoaded)
-                {
+                if (allLoaded) {
                     $('#example_' + loadIndex).horizontalTimeline();
                     loadIndex++;
                     clearInterval(allLoadedInterval);
