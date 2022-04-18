@@ -152,7 +152,7 @@
         var listed = {};
         var loadIndex = 1;
         function appendNews(item) {
-            var newsList = $('#example_'+loadIndex+' ol');
+            var newsList = $('#example_' + loadIndex + ' ol');
             if (typeof listed[item.guid.toString()] !== 'undefined') {
                 return false;
             }
@@ -165,10 +165,10 @@
                 newsList.append(itemNews);
             }
             itemNews.find('div').append(`<p>
-                <a target="_blank" href="`+ item.link + `">` + item.title + ' (' + itemDate + ')'  + `</a>    
+                <a target="_blank" href="`+ item.link + `">` + item.title + ' (' + itemDate + ')' + `</a>    
             </p>`);
         }
-        
+
 
         function loadPage(page, callback) {
             var url = $('#source_input').val();
@@ -181,46 +181,54 @@
                 success: function (xmlStr) {
                     xmlStr = xmlStr.replace(/[\x00-\x09\x0B-\x0C\x0E-\x1F\x7F-\x9F]/g, '');
                     var x2js = new X2JS();
-                    var jsonObj = x2js.xml_str2json(xmlStr);
-                    jsonObj.rss.channel.item.forEach(function (item) {
-                        appendNews(item);
-                    });
-                    callback();
+                    var jsonObj = x2js.xml_str2json($.trim(xmlStr));
+                    if (jsonObj) {
+                        jsonObj.rss.channel.item.forEach(function (item) {
+                            appendNews(item);
+                        });
+                    }
+                    
+                    callback(page);
                 }
             });
         }
 
 
-        
+
         function loadContent() {
             listed = {};
             $('#example_' + loadIndex).remove();
-            if(1) {
-                $('#example_wrapper').html(`
-            <div class="horizontal-timeline" id="example_`+loadIndex+`">
+            $('#example_wrapper').html(`
+            <div class="horizontal-timeline" id="example_`+ loadIndex + `">
                 <div class="events-content">
                     <ol>
                     </ol>
                 </div>
             </div>
             `);
-            }
-            
-            setTimeout(function () {
-                loadPage(1, function () {
-                    loadPage(2, function () {
-                        loadPage(3, function () {
-                            loadPage(4, function () {
-                                loadPage(5, function () {
-                                    $('#example_' + loadIndex).horizontalTimeline();
-                                    loadIndex++;
-                                });
-                            });
-                        });
-                    });
+            var pagesLoaded = {};
+            var maxPage = 11;
+            for (var i = 1; i < maxPage; i++) {
+                loadPage(i, (i) => {
+                    pagesLoaded['page' + i] = true;
                 });
-            }, 1000);
-
+            }
+            var allLoadedInterval = setInterval(() => {
+                allLoaded = true;
+                for (var i = 1; i < maxPage; i++) {
+                    if (typeof pagesLoaded['page' + i] === 'undefined')
+                    {
+                        allLoaded = false;
+                        break;
+                    }
+                }
+                if (allLoaded)
+                {
+                    $('#example_' + loadIndex).horizontalTimeline();
+                    loadIndex++;
+                    clearInterval(allLoadedInterval);
+                }
+            }, 100);
         }
 
     </script>
